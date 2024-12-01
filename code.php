@@ -13,3 +13,46 @@ function change_product_price_dynamically( $cart ) {
         $cart_item['data']->set_price( $new_price );
     }
 }
+
+
+//Discourse integration
+//Mapping of Wordpress Role to Discourse Group
+if ( class_exists( '\WPDiscourse\Discourse\Discourse' ) ) {
+    add_filter( 'wpdc_sso_params', 'wpdc_custom_sso_params', 10, 2 );
+}
+
+function wpdc_custom_sso_params( $params, $user ) {
+    $groups = map_wp_role_to_discourse_group($user);
+	
+    if ( strlen($groups) > 0 ) {
+        $params['add_groups'] = $groups;
+    }
+    return $params;
+}
+
+function map_wp_role_to_discourse_group($user) {
+	
+	$user = wp_get_current_user();
+    // Get user roles from WordPress
+    $user_roles = $user->roles;
+	
+    // Set default role to Family (Subscriber)
+    $discourse_group = 'FamilySubscriber';
+
+    // Role mapping logic
+    if (in_array('administrator', $user_roles)) {
+        $discourse_group = 'Admins';
+    } elseif (in_array('contributor', $user_roles)) {
+        $discourse_group = 'Hosts';
+    } elseif (in_array('subscriber', $user_roles)) {
+        $discourse_group = 'FamilySubscriber';
+    } elseif (in_array('customer', $user_roles)) {
+        $discourse_group = 'Family';
+    }
+
+	
+    // Return the corresponding Discourse group
+    return $discourse_group;
+}
+
+//Discourse integration End
